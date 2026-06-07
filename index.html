@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Metronom</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app">
+      <h1>Metronom</h1>
+
+      <section class="controls">
+        <label>
+          Tempo (BPM)
+          <input id="tempo" type="number" min="20" max="300" value="120" />
+        </label>
+
+        <label>
+          Time Signature
+          <select id="timeSignature">
+            <option value="2/2">2/2</option>
+            <option value="2/4">2/4</option>
+            <option value="3/4">3/4</option>
+            <option value="4/4" selected>4/4</option>
+            <option value="5/4">5/4</option>
+            <option value="6/8">6/8</option>
+            <option value="7/8">7/8</option>
+          </select>
+        </label>
+
+        <label>
+          Counted Note Value
+          <select id="noteValue">
+            <option value="2">Half notes (1/2)</option>
+            <option value="4" selected>Quarter notes (1/4)</option>
+            <option value="8">Eighth notes (1/8)</option>
+            <option value="16">Sixteenth notes (1/16)</option>
+            <option value="32">Thirty-second notes (1/32)</option>
+          </select>
+        </label>
+
+        <label>
+          Accent on Beat
+          <input id="accentBeat" type="number" min="1" value="1" />
+        </label>
+      </section>
+
+      <section class="status">
+        <div class="counter" id="counter">Beat 1 / 4 · Measure 1</div>
+      </section>
+
+      <section class="actions">
+        <button id="start">Start</button>
+        <button id="stop" disabled>Stop</button>
+      </section>
+    </main>
+
+    <script src="script.js"></script>
+  </body>
+</html>
