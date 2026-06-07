@@ -27,7 +27,7 @@ const NORMAL_WAVE_TYPE = 'sine';
 const MIN_GAIN_VALUE = 0.0001;
 const ATTACK_TIME_SEC = 0.002;
 const RELEASE_TIME_SEC = 0.055;
-const CLICK_DURATION_SEC = 0.06;
+const CLICK_DURATION_SEC = ATTACK_TIME_SEC + RELEASE_TIME_SEC + 0.005;
 
 const NOTE_NAMES = {
   2: 'Half notes',
@@ -77,7 +77,10 @@ function playClickAt(when, isAccent, volume) {
   );
   gainNode.gain.setValueAtTime(MIN_GAIN_VALUE, when);
   gainNode.gain.exponentialRampToValueAtTime(peakVolume, when + ATTACK_TIME_SEC);
-  gainNode.gain.exponentialRampToValueAtTime(MIN_GAIN_VALUE, when + RELEASE_TIME_SEC);
+  gainNode.gain.exponentialRampToValueAtTime(
+    MIN_GAIN_VALUE,
+    when + ATTACK_TIME_SEC + RELEASE_TIME_SEC,
+  );
 
   oscillator.connect(gainNode);
   gainNode.connect(audioContext.destination);
