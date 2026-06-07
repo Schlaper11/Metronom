@@ -106,6 +106,13 @@ button:disabled {
   border-color: #fb923c;
 }
 
+.note-status {
+  margin-top: 8px;
+  color: #bfdbfe;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
 .beat-dots {
   margin-top: 12px;
   display: flex;

@@ -4,12 +4,13 @@ const noteValueSelect = document.getElementById('noteValue');
 const accentBeatInput = document.getElementById('accentBeat');
 const volumeInput = document.getElementById('volume');
 const counter = document.getElementById('counter');
+const noteStatus = document.getElementById('noteStatus');
 const beatDots = document.getElementById('beatDots');
 const startButton = document.getElementById('start');
 const stopButton = document.getElementById('stop');
 
 let audioContext;
-let schedulerHandle = null;
+let schedulerIntervalId = null;
 let beatPosition = 0;
 let measure = 1;
 let nextTickAt = 0;
@@ -103,7 +104,8 @@ function renderBeatDots(totalBeats, currentBeat) {
 }
 
 function updateCounter(currentBeat, beats, isAccent, noteDenominator) {
-  counter.textContent = `Beat ${currentBeat} / ${beats} · Measure ${measure} · ${getNoteName(noteDenominator)}`;
+  counter.textContent = `Beat ${currentBeat} / ${beats} · Measure ${measure}`;
+  noteStatus.textContent = getNoteName(noteDenominator);
   counter.classList.toggle('accent', isAccent);
   renderBeatDots(beats, currentBeat);
 }
@@ -142,7 +144,7 @@ function scheduleTick() {
 }
 
 function scheduler() {
-  if (!audioContext || schedulerHandle === null) {
+  if (!audioContext || schedulerIntervalId === null) {
     return;
   }
 
@@ -152,7 +154,7 @@ function scheduler() {
 }
 
 function start() {
-  if (schedulerHandle !== null) {
+  if (schedulerIntervalId !== null) {
     return;
   }
 
@@ -166,7 +168,7 @@ function start() {
     nextTickAt = audioContext.currentTime + INITIAL_SCHEDULE_OFFSET_SEC;
     clearPendingUiUpdates();
     scheduler();
-    schedulerHandle = window.setInterval(scheduler, SCHEDULER_INTERVAL_MS);
+    schedulerIntervalId = window.setInterval(scheduler, SCHEDULER_INTERVAL_MS);
     startButton.disabled = true;
     stopButton.disabled = false;
     document.body.classList.add('playing');
@@ -181,9 +183,9 @@ function start() {
 }
 
 function stop() {
-  if (schedulerHandle !== null) {
-    window.clearInterval(schedulerHandle);
-    schedulerHandle = null;
+  if (schedulerIntervalId !== null) {
+    window.clearInterval(schedulerIntervalId);
+    schedulerIntervalId = null;
   }
 
   clearPendingUiUpdates();
@@ -203,5 +205,9 @@ timeSignatureSelect.addEventListener('change', () => {
   }
   renderBeatDots(beats, Math.max(1, Math.floor(beatPosition) + 1));
 });
+noteValueSelect.addEventListener('change', () => {
+  noteStatus.textContent = getNoteName(Number(noteValueSelect.value));
+});
 
 renderBeatDots(parseTimeSignature(timeSignatureSelect.value).beats, 1);
+noteStatus.textContent = getNoteName(Number(noteValueSelect.value));
