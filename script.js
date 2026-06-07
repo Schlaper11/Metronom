@@ -18,8 +18,15 @@ const pendingUiUpdates = new Set();
 
 const SCHEDULER_INTERVAL_MS = 25;
 const SCHEDULE_AHEAD_TIME_SEC = 0.12;
+const INITIAL_SCHEDULE_OFFSET_SEC = 0.05;
 const ACCENT_VOLUME_MULTIPLIER = 0.65;
 const NORMAL_VOLUME_MULTIPLIER = 0.4;
+const ACCENT_WAVE_TYPE = 'triangle';
+const NORMAL_WAVE_TYPE = 'sine';
+const MIN_GAIN_VALUE = 0.0001;
+const ATTACK_TIME_SEC = 0.002;
+const RELEASE_TIME_SEC = 0.055;
+const CLICK_DURATION_SEC = 0.06;
 
 const NOTE_NAMES = {
   2: 'Half notes',
@@ -60,22 +67,22 @@ function playClickAt(when, isAccent, volume) {
 
   const oscillator = audioContext.createOscillator();
   const gainNode = audioContext.createGain();
-  oscillator.type = isAccent ? 'triangle' : 'sine';
+  oscillator.type = isAccent ? ACCENT_WAVE_TYPE : NORMAL_WAVE_TYPE;
   oscillator.frequency.setValueAtTime(isAccent ? 1250 : 900, when);
 
   const peakVolume = Math.max(
-    0.0001,
+    MIN_GAIN_VALUE,
     volume * (isAccent ? ACCENT_VOLUME_MULTIPLIER : NORMAL_VOLUME_MULTIPLIER),
   );
-  gainNode.gain.setValueAtTime(0.0001, when);
-  gainNode.gain.exponentialRampToValueAtTime(peakVolume, when + 0.002);
-  gainNode.gain.exponentialRampToValueAtTime(0.0001, when + 0.055);
+  gainNode.gain.setValueAtTime(MIN_GAIN_VALUE, when);
+  gainNode.gain.exponentialRampToValueAtTime(peakVolume, when + ATTACK_TIME_SEC);
+  gainNode.gain.exponentialRampToValueAtTime(MIN_GAIN_VALUE, when + RELEASE_TIME_SEC);
 
   oscillator.connect(gainNode);
   gainNode.connect(audioContext.destination);
 
   oscillator.start(when);
-  oscillator.stop(when + 0.06);
+  oscillator.stop(when + CLICK_DURATION_SEC);
 }
 
 function renderBeatDots(totalBeats, currentBeat) {
@@ -144,7 +151,7 @@ function scheduler() {
   }
 }
 
-async function start() {
+function start() {
   if (schedulerHandle !== null) {
     return;
   }
@@ -152,19 +159,25 @@ async function start() {
   if (!audioContext) {
     audioContext = new AudioContext();
   }
+
+  const beginPlayback = () => {
+    beatPosition = 0;
+    measure = 1;
+    nextTickAt = audioContext.currentTime + INITIAL_SCHEDULE_OFFSET_SEC;
+    clearPendingUiUpdates();
+    scheduler();
+    schedulerHandle = window.setInterval(scheduler, SCHEDULER_INTERVAL_MS);
+    startButton.disabled = true;
+    stopButton.disabled = false;
+    document.body.classList.add('playing');
+  };
+
   if (audioContext.state === 'suspended') {
-    await audioContext.resume();
+    audioContext.resume().then(beginPlayback);
+    return;
   }
 
-  beatPosition = 0;
-  measure = 1;
-  nextTickAt = audioContext.currentTime + 0.05;
-  clearPendingUiUpdates();
-  scheduler();
-  schedulerHandle = window.setInterval(scheduler, SCHEDULER_INTERVAL_MS);
-  startButton.disabled = true;
-  stopButton.disabled = false;
-  document.body.classList.add('playing');
+  beginPlayback();
 }
 
 function stop() {
