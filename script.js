@@ -14,10 +14,12 @@ let beatPosition = 0;
 let measure = 1;
 let nextTickAt = 0;
 let dotsCount = 0;
-const pendingUiUpdates = [];
+const pendingUiUpdates = new Set();
 
-const LOOKAHEAD_MS = 25;
-const SCHEDULE_AHEAD_SEC = 0.12;
+const SCHEDULER_INTERVAL_MS = 25;
+const SCHEDULE_AHEAD_TIME_SEC = 0.12;
+const ACCENT_VOLUME_MULTIPLIER = 0.65;
+const NORMAL_VOLUME_MULTIPLIER = 0.4;
 
 const NOTE_NAMES = {
   2: 'Half notes',
@@ -61,7 +63,10 @@ function playClickAt(when, isAccent, volume) {
   oscillator.type = isAccent ? 'triangle' : 'sine';
   oscillator.frequency.setValueAtTime(isAccent ? 1250 : 900, when);
 
-  const peakVolume = Math.max(0.0001, volume * (isAccent ? 0.65 : 0.4));
+  const peakVolume = Math.max(
+    0.0001,
+    volume * (isAccent ? ACCENT_VOLUME_MULTIPLIER : NORMAL_VOLUME_MULTIPLIER),
+  );
   gainNode.gain.setValueAtTime(0.0001, when);
   gainNode.gain.exponentialRampToValueAtTime(peakVolume, when + 0.002);
   gainNode.gain.exponentialRampToValueAtTime(0.0001, when + 0.055);
@@ -97,10 +102,10 @@ function updateCounter(currentBeat, beats, isAccent, noteDenominator) {
 }
 
 function clearPendingUiUpdates() {
-  while (pendingUiUpdates.length > 0) {
-    const timeoutHandle = pendingUiUpdates.pop();
+  for (const timeoutHandle of pendingUiUpdates) {
     window.clearTimeout(timeoutHandle);
   }
+  pendingUiUpdates.clear();
 }
 
 function scheduleTick() {
@@ -114,11 +119,11 @@ function scheduleTick() {
 
   playClickAt(nextTickAt, isAccent, volume);
   const uiDelayMs = Math.max(0, (nextTickAt - audioContext.currentTime) * 1000);
-  const uiUpdateHandle = window.setTimeout(
-    () => updateCounter(currentBeat, beats, isAccent, noteDenominator),
-    uiDelayMs,
-  );
-  pendingUiUpdates.push(uiUpdateHandle);
+  const uiUpdateHandle = window.setTimeout(() => {
+    pendingUiUpdates.delete(uiUpdateHandle);
+    updateCounter(currentBeat, beats, isAccent, noteDenominator);
+  }, uiDelayMs);
+  pendingUiUpdates.add(uiUpdateHandle);
 
   beatPosition += stepInBeats;
   if (beatPosition >= beats) {
@@ -134,7 +139,7 @@ function scheduler() {
     return;
   }
 
-  while (nextTickAt < audioContext.currentTime + SCHEDULE_AHEAD_SEC) {
+  while (nextTickAt < audioContext.currentTime + SCHEDULE_AHEAD_TIME_SEC) {
     scheduleTick();
   }
 }
@@ -156,7 +161,7 @@ async function start() {
   nextTickAt = audioContext.currentTime + 0.05;
   clearPendingUiUpdates();
   scheduler();
-  schedulerHandle = window.setInterval(scheduler, LOOKAHEAD_MS);
+  schedulerHandle = window.setInterval(scheduler, SCHEDULER_INTERVAL_MS);
   startButton.disabled = true;
   stopButton.disabled = false;
   document.body.classList.add('playing');
