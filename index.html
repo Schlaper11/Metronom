@@ -9,6 +9,7 @@
   <body>
     <main class="app">
       <h1>Metronom</h1>
+      <p class="subtitle">Smoother timing, clearer pulse, better practice flow.</p>
 
       <section class="controls">
         <label>
@@ -44,10 +45,25 @@
           Accent on Beat
           <input id="accentBeat" type="number" min="1" value="1" />
         </label>
+
+        <label>
+          Volume
+          <input id="volume" type="range" min="0" max="100" value="75" />
+        </label>
       </section>
 
       <section class="status">
-        <div class="counter" id="counter">Beat 1 / 4 · Measure 1</div>
+        <div
+          class="counter"
+          id="counter"
+          aria-live="polite"
+          aria-atomic="true"
+          aria-relevant="text"
+        >
+          Beat 1 / 4 · Measure 1
+        </div>
+        <div class="note-status" id="noteStatus">Quarter notes</div>
+        <div class="beat-dots" id="beatDots" aria-hidden="true"></div>
       </section>
 
       <section class="actions">
