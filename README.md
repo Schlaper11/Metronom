@@ -10,4 +10,4 @@ A simple browser-based metronome with:
 
 ## Run
 
-Open `/tmp/workspace/Schlaper11/Metronom/index.html` in your browser.
+Open `index.html` in your browser.

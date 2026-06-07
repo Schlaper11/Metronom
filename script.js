@@ -7,9 +7,10 @@ const startButton = document.getElementById('start');
 const stopButton = document.getElementById('stop');
 
 let audioContext;
-let timerId = null;
+let timerHandle = null;
 let beatPosition = 0;
 let measure = 1;
+let nextTickAt = 0;
 
 function parseTimeSignature(value) {
   const [beats, denominator] = value.split('/').map(Number);
@@ -73,25 +74,28 @@ function tick() {
     measure += 1;
   }
 
-  timerId = window.setTimeout(tick, tickDelay);
+  nextTickAt += tickDelay;
+  const nextDelay = Math.max(0, nextTickAt - performance.now());
+  timerHandle = window.setTimeout(tick, nextDelay);
 }
 
 function start() {
-  if (timerId !== null) {
+  if (timerHandle !== null) {
     return;
   }
 
   beatPosition = 0;
   measure = 1;
+  nextTickAt = performance.now();
   tick();
   startButton.disabled = true;
   stopButton.disabled = false;
 }
 
 function stop() {
-  if (timerId !== null) {
-    window.clearTimeout(timerId);
-    timerId = null;
+  if (timerHandle !== null) {
+    window.clearTimeout(timerHandle);
+    timerHandle = null;
   }
 
   startButton.disabled = false;
